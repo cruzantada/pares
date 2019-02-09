@@ -1,0 +1,32 @@
+fish
+pez
+cat
+gato/a
+dog
+perro/a
+bird
+ave
+eye
+el ojo
+ear
+el oreja
+mouth
+la boca
+nose
+la nariz
+house
+la casa
+room
+el cuarto
+kitchen
+la cocina
+bathroom
+el baño
+car
+el coche
+bus
+el autobús
+bicycle
+la bicicleta
+airplane
+el avión
