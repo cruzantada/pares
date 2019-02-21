@@ -11,11 +11,10 @@ private:
   std::queue<Card> cards;
 
 public:
-  Card getCard();
   void addCard(Card card);
   void removeCard();
+  Card getCard();
   int getNumCards();
-  bool isEmpty();
 };
 
 #endif // DECK_H

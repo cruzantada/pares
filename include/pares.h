@@ -1,26 +1,20 @@
 #ifndef PARES_H
 #define PARES_H
 
-#include <set>
-
 #include "card.h"
 #include "deck.h"
 #include "board.h"
 
-class Pares
-{
-private:
-  Deck deck;
-  Board board;
-  int roundNum;
-  std::set<int> matchedCards;
+const int ANIMATION_MSEC = 5;
 
-public:
-  Pares();
-  void loadBoard();
-  void checkMatch(int firstGuess, int secondGuess);
-  void getGuesses();
-  bool play();
-};
+// Function prototypes
+void loadDeck();
+void loadBoard();
+void checkCardMatch(int firstGuess, int secondGuess);
+void flipUnmatchedCardsDown(int firstGuess, int secondGuess);
+void reshape(int width, int height);
+void display();
+void getKeyboardInput(unsigned char c, int x, int y);
+void animate(int val);
 
 #endif // PARES_H

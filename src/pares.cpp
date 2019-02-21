@@ -1,7 +1,6 @@
-#include <iostream>
+#include <string>
 #include <fstream>
 #include <set>
-#include <tuple>
 
 #include "card.cpp"
 #include "deck.cpp"
@@ -9,19 +8,28 @@
 
 #include "../include/pares.h"
 
-Pares::Pares()
+// Global variables
+bool start = true;
+bool newRound = true;
+bool firstSelection = true;
+bool checkMatchPause = false;
+Deck deck;
+Board board;
+int guess;
+int guessOne = 99;
+int guessTwo = 99;
+std::set<int> matchedCards;
+
+void loadDeck()
 {
-  roundNum = 1;
   std::string inFileName = "../data/words.txt";
   std::ifstream inFile;
+  std::string enWord, esWord;
 
   inFile.open(inFileName);
 
   if (inFile.is_open())
   {
-    std::string enWord;
-    std::string esWord;
-
     while (inFile)
     {
       std::getline(inFile, enWord);
@@ -32,87 +40,365 @@ Pares::Pares()
 
     inFile.close();
   }
-  else
-  {
-    std::cout << "Cannot open file: " << inFileName << std::endl;
-  }
 }
 
-void Pares::loadBoard()
+void loadBoard()
 {
-  board.addCard(Card(" ", " "), 0); // Empty ninth card
-
-  for (int i = 1; i < board.getSize(); ++i)
+  if (deck.getNumCards() >= 8)
   {
-    board.addCard(deck.getCard(), i);
-    deck.removeCard();
-  }
+    board.addCard(Card(" ", " "), 0); // Empty ninth card
 
-  board.shuffle();
+    for (int i = 1; i < board.getNumCards(); ++i)
+    {
+      board.addCard(deck.getCard(), i);
+      deck.removeCard();
+    }
+
+    board.shuffleCards();
+    board.setCardNumbers();
+    board.setCardFillColors(0, 1, 1);
+    board.setCardPositions();
+  }
+  else // Not enough cards in deck
+  {
+    exit(0);
+  }
 }
 
-void Pares::checkMatch(int firstGuess, int secondGuess)
+void checkCardMatch(int firstGuess, int secondGuess)
 {
   if (board.getCardWord(firstGuess) == board.getCardMatch(secondGuess))
   {
     matchedCards.insert(firstGuess);
     matchedCards.insert(secondGuess);
   }
-  else
+}
+
+void flipUnmatchedCardsDown(int firstGuess, int secondGuess)
+{
+  if (!matchedCards.count(firstGuess))
   {
     board.flipCardDown(firstGuess);
     board.flipCardDown(secondGuess);
   }
 }
 
-void Pares::getGuesses()
+void reshape(int width, int height)
 {
-  int guess;
-  int guesses[2] = { 9, 9 };
-
-  board.display();
-
-  for (int i = 0; i < 2; ++i)
-  {
-    std::cout << "\nPlease select a card number: ";
-    std::cin >> guess;
-
-    while (guess < 0 || guess > 8 || guess == guesses[0] || matchedCards.count(guess) || std::cin.fail())
-    {
-      std::cin.clear();
-      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      std::cout << "Please select a card number: ";
-      std::cin >> guess;
-    }
-
-    guesses[i] = guess;
-    board.flipCardUp(guess);
-
-    std::cout << std::endl;
-    board.display();
-  }
-
-  checkMatch(guesses[0], guesses[1]);
+  glViewport(0, 0, width, height);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluOrtho2D(0.0, (GLdouble)width, 0.0, (GLdouble)height);
 }
 
-bool Pares::play()
+void display()
 {
-  while (deck.getNumCards() >= board.getSize())
+  if (start)
   {
-    std::cout << "\n-- Round " << roundNum++ << " --\n";
+    loadDeck();
+    start = false;
+  }
+
+  if (newRound)
+  {
     loadBoard();
+    newRound = false;
+  }
 
-    while (matchedCards.size() < board.getSize() - 1)
-    {
-      std::cout << std::endl;
-      getGuesses();
-      std::cout << "\n----\n";
+  glClearColor(0.0, 0.0, 0.0, 1.0);
+  glClear(GL_COLOR_BUFFER_BIT);
 
-      if (matchedCards.size() == 8)
+  // if (firstSelection)
+  // {
+  //   glRasterPos2i(5, 600);
+  //   glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, '1');
+  // }
+  // else
+  // {
+  //   glRasterPos2i(5, 600);
+  //   glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, '2');
+  // }
+
+  board.displayCards();
+  glFlush();
+  glutSwapBuffers();
+}
+
+void getKeyboardInput(unsigned char c, int x, int y)
+{
+  switch (c)
+  {
+    case '0':
+      guess = c - '0';
+
+      if (matchedCards.count(guess) || guessOne == guess || checkMatchPause)
       {
-        matchedCards.clear();
         break;
       }
-    }
+      else
+      {
+        board.flipCardUp(guess);
+      }
+
+      if (firstSelection)
+      {
+        guessOne = guess;
+        firstSelection = false;
+        break;
+      }
+      else
+      {
+        guessTwo = guess;
+        checkCardMatch(guessOne, guess);
+        firstSelection = true;
+        checkMatchPause = true;
+        break;
+      }
+
+    case '1':
+      guess = c - '0';
+
+      if (matchedCards.count(guess) || guessOne == guess || checkMatchPause)
+      {
+        break;
+      }
+      else
+      {
+        board.flipCardUp(guess);
+      }
+
+      if (firstSelection)
+      {
+        guessOne = guess;
+        firstSelection = false;
+        break;
+      }
+      else
+      {
+        guessTwo = guess;
+        checkCardMatch(guessOne, guess);
+        firstSelection = true;
+        checkMatchPause = true;
+        break;
+      }
+
+    case '2':
+      guess = c - '0';
+
+      if (matchedCards.count(guess) || guessOne == guess || checkMatchPause)
+      {
+        break;
+      }
+      else
+      {
+        board.flipCardUp(guess);
+      }
+
+      if (firstSelection)
+      {
+        guessOne = guess;
+        firstSelection = false;
+        break;
+      }
+      else
+      {
+        guessTwo = guess;
+        checkCardMatch(guessOne, guess);
+        firstSelection = true;
+        checkMatchPause = true;
+        break;
+      }
+
+    case '3':
+      guess = c - '0';
+
+      if (matchedCards.count(guess) || guessOne == guess || checkMatchPause)
+      {
+        break;
+      }
+      else
+      {
+        board.flipCardUp(guess);
+      }
+
+      if (firstSelection)
+      {
+        guessOne = guess;
+        firstSelection = false;
+        break;
+      }
+      else
+      {
+        guessTwo = guess;
+        checkCardMatch(guessOne, guess);
+        firstSelection = true;
+        checkMatchPause = true;
+        break;
+      }
+
+    case '4':
+      guess = c - '0';
+
+      if (matchedCards.count(guess) || guessOne == guess || checkMatchPause)
+      {
+        break;
+      }
+      else
+      {
+        board.flipCardUp(guess);
+      }
+
+      if (firstSelection)
+      {
+        guessOne = guess;
+        firstSelection = false;
+        break;
+      }
+      else
+      {
+        guessTwo = guess;
+        checkCardMatch(guessOne, guess);
+        firstSelection = true;
+        checkMatchPause = true;
+        break;
+      }
+
+    case '5':
+      guess = c - '0';
+
+      if (matchedCards.count(guess) || guessOne == guess || checkMatchPause)
+      {
+        break;
+      }
+      else
+      {
+        board.flipCardUp(guess);
+      }
+
+      if (firstSelection)
+      {
+        guessOne = guess;
+        firstSelection = false;
+        break;
+      }
+      else
+      {
+        guessTwo = guess;
+        checkCardMatch(guessOne, guess);
+        firstSelection = true;
+        checkMatchPause = true;
+        break;
+      }
+
+    case '6':
+      guess = c - '0';
+
+      if (matchedCards.count(guess) || guessOne == guess || checkMatchPause)
+      {
+        break;
+      }
+      else
+      {
+        board.flipCardUp(guess);
+      }
+
+      if (firstSelection)
+      {
+        guessOne = guess;
+        firstSelection = false;
+        break;
+      }
+      else
+      {
+        guessTwo = guess;
+        checkCardMatch(guessOne, guess);
+        firstSelection = true;
+        checkMatchPause = true;
+        break;
+      }
+
+    case '7':
+      guess = c - '0';
+
+      if (matchedCards.count(guess) || guessOne == guess || checkMatchPause)
+      {
+        break;
+      }
+      else
+      {
+        board.flipCardUp(guess);
+      }
+
+      if (firstSelection)
+      {
+        guessOne = guess;
+        firstSelection = false;
+        break;
+      }
+      else
+      {
+        guessTwo = guess;
+        checkCardMatch(guessOne, guess);
+        firstSelection = true;
+        checkMatchPause = true;
+        break;
+      }
+
+    case '8':
+      guess = c - '0';
+
+      if (matchedCards.count(guess) || guessOne == guess || checkMatchPause)
+      {
+        break;
+      }
+      else
+      {
+        board.flipCardUp(guess);
+      }
+
+      if (firstSelection)
+      {
+        guessOne = guess;
+        firstSelection = false;
+        break;
+      }
+      else
+      {
+        guessTwo = guess;
+        checkCardMatch(guessOne, guess);
+        firstSelection = true;
+        checkMatchPause = true;
+        break;
+      }
+
+    case 'q':
+      exit(0);
+      break;
+
+    default:
+      if (checkMatchPause)
+      {
+        flipUnmatchedCardsDown(guessOne, guessTwo);
+        guessOne = 99;
+        checkMatchPause = false;
+
+        if (matchedCards.size() == 8)
+        {
+          matchedCards.clear();
+          newRound = true;
+        }
+
+        break;
+      }
+      else
+      {
+        break;
+      }
   }
+}
+
+void animate(int val)
+{
+  glutPostRedisplay();
+  glutTimerFunc(ANIMATION_MSEC, animate, 0);
 }

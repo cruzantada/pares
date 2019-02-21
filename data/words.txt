@@ -20,13 +20,5 @@ room
 el cuarto
 kitchen
 la cocina
-bathroom
-el baño
-car
-el coche
-bus
-el autobús
-bicycle
-la bicicleta
-airplane
-el avión
+living room
+la sala
