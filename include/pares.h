@@ -13,6 +13,7 @@ void loadBoard();
 void checkCardMatch(int firstGuess, int secondGuess);
 void flipUnmatchedCardsDown(int firstGuess, int secondGuess);
 void reshape(int width, int height);
+void displayText();
 void display();
 void getKeyboardInput(unsigned char c, int x, int y);
 void animate(int val);

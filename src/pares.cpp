@@ -13,11 +13,13 @@ bool start = true;
 bool newRound = true;
 bool firstSelection = true;
 bool checkMatchPause = false;
+bool matchFound = false;
 Deck deck;
 Board board;
 int guess;
 int guessOne = 99;
 int guessTwo = 99;
+int roundNum = 0;
 std::set<int> matchedCards;
 
 void loadDeck()
@@ -71,6 +73,11 @@ void checkCardMatch(int firstGuess, int secondGuess)
   {
     matchedCards.insert(firstGuess);
     matchedCards.insert(secondGuess);
+    matchFound = true;
+  }
+  else
+  {
+    matchFound = false;
   }
 }
 
@@ -91,6 +98,45 @@ void reshape(int width, int height)
   gluOrtho2D(0.0, (GLdouble)width, 0.0, (GLdouble)height);
 }
 
+void displayText()
+{
+  std::string instructions;
+  std::string roundText = "Round: " + std::to_string(roundNum);
+
+  glColor3f(1.0, 1.0, 1.0);
+
+  if (checkMatchPause && matchFound)
+  {
+    instructions = "Match! Press enter to continue...";
+  }
+  else if (checkMatchPause)
+  {
+    instructions = "No match! Press enter to continue...";
+  }
+  else if (firstSelection)
+  {
+    instructions = "Select a card...";
+  }
+  else
+  {
+    instructions = "Select another card...";
+  }
+
+  glRasterPos2i(50, 630);
+
+  for (int i = 0; i < instructions.length(); ++i)
+  {
+    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, instructions[i]);
+  }
+
+  glRasterPos2i(520, 630);
+
+  for (int i = 0; i < roundText.length(); ++i)
+  {
+    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, roundText[i]);
+  }
+}
+
 void display()
 {
   if (start)
@@ -103,22 +149,12 @@ void display()
   {
     loadBoard();
     newRound = false;
+    roundNum++;
   }
 
   glClearColor(0.0, 0.0, 0.0, 1.0);
   glClear(GL_COLOR_BUFFER_BIT);
-
-  // if (firstSelection)
-  // {
-  //   glRasterPos2i(5, 600);
-  //   glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, '1');
-  // }
-  // else
-  // {
-  //   glRasterPos2i(5, 600);
-  //   glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, '2');
-  // }
-
+  displayText();
   board.displayCards();
   glFlush();
   glutSwapBuffers();
