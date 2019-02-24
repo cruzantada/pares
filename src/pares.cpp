@@ -24,7 +24,7 @@ std::set<int> matchedCards;
 
 void loadDeck()
 {
-  std::string inFileName = "../data/words.txt";
+  std::string inFileName = "words.txt";
   std::ifstream inFile;
   std::string enWord, esWord;
 
